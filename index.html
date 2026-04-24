@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Statistics Dashboard</title><style>
+<title>Statistics Dashboard</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><style>
 body {
     margin: 0;
     background: #050505;
@@ -13,119 +13,160 @@ body {
 .nav {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 15px 25px;
+    padding: 15px;
     border-bottom: 1px solid #00ffcc;
 }
 
-.user {
-    font-size: 14px;
-    color: #aaa;
+button {
+    border: 1px solid #00ffcc;
+    background: transparent;
+    color: #00ffcc;
+    padding: 8px;
+    cursor: pointer;
 }
 
-/* Title */
-.title {
+/* Upload */
+.upload {
     text-align: center;
-    margin-top: 20px;
+    margin: 20px;
 }
 
 /* Cards */
 .container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 20px;
-    padding: 30px;
+    gap: 15px;
+    padding: 20px;
 }
 
 .card {
     border: 1px solid #00ffcc;
     padding: 20px;
     text-align: center;
-    border-radius: 10px;
-    transition: 0.3s;
-}
-
-.card:hover {
-    background: #00ffcc;
-    color: black;
-    transform: scale(1.05);
 }
 
 /* Charts */
-.charts {
-    text-align: center;
-    padding-bottom: 40px;
-}
-
-img {
-    width: 280px;
+canvas {
+    background: white;
     margin: 10px;
-    border: 1px solid #00ffcc;
     border-radius: 5px;
 }
 
-/* Button */
-button {
-    padding: 8px 15px;
-    border: 1px solid #00ffcc;
-    background: transparent;
-    color: #00ffcc;
-    cursor: pointer;
+/* Formulas */
+.formulas {
+    text-align: center;
+    color: #aaa;
 }
-
-button:hover {
-    background: #00ffcc;
-    color: black;
-}
-</style></head><body><!-- Navbar --><div class="nav">
-    <h2>⚡ Statistics Dashboard</h2>
-    <div>
-        <span class="user" id="user"></span>
-        <button onclick="logout()">Logout</button>
-    </div>
-</div><!-- Title --><div class="title">
-    <h1>📊 Data Analysis Overview</h1><h3 style="color:#888;">
-    Statistics Project submitted to Eng. Yara 👩‍🏫<br>
-    By: Abdallah Badawy 🚀
-</h3>
-
-</div><!-- Cards --><div class="container"><div class="card"><h3>Mean</h3><p id="mean"></p></div>
+</style></head><body><div class="nav">
+<h2>⚡ Dashboard</h2>
+<div>
+<span id="user"></span>
+<button onclick="logout()">Logout</button>
+</div>
+</div><h1 style="text-align:center;">📊 Data Analysis</h1><h3 style="text-align:center;color:#888;">
+Submitted to Eng. Yara 👩‍🏫<br>
+By: Abdallah Badawy 🚀
+</h3><!-- Upload --><div class="upload">
+<input type="file" id="fileInput">
+<button onclick="loadFile()">Upload Dataset</button>
+</div><!-- Cards --><div class="container">
+<div class="card"><h3>Mean</h3><p id="mean"></p></div>
 <div class="card"><h3>Median</h3><p id="median"></p></div>
 <div class="card"><h3>Mode</h3><p id="mode"></p></div>
 <div class="card"><h3>Range</h3><p id="range"></p></div>
 <div class="card"><h3>Variance</h3><p id="variance"></p></div>
-<div class="card"><h3>Std Deviation</h3><p id="std"></p></div></div><!-- Charts --><div class="charts">
-<h2>📈 Visual Charts</h2><img src="bar.png">
-<img src="scatter.png">
-<img src="hist.png">
-<img src="box.png">
-<img src="pie.png"></div><script>
+<div class="card"><h3>Std Dev</h3><p id="std"></p></div>
+</div><!-- Formulas --><div class="formulas">
+<h2>📘 Formulas</h2>
+<p>Mean = Σx / n</p>
+<p>Variance = Σ(x - μ)² / n</p>
+<p>Std Dev = √Variance</p>
+</div><!-- Charts --><div style="text-align:center;">
+<canvas id="barChart"></canvas>
+<canvas id="histChart"></canvas>
+</div><script>
 
 // حماية
 if (localStorage.getItem("loggedIn") !== "true") {
     window.location.href = "login.html";
 }
 
-// اسم المستخدم
 document.getElementById("user").innerText =
-    "👤 " + (localStorage.getItem("username") || "admin");
+"👤 " + localStorage.getItem("username");
 
-// ⚠️ حط القيم الحقيقية من Python هنا
-let stats = {
-    mean: "14.8",
-    median: "15",
-    mode: "15",
-    range: "15",
-    variance: "10.2",
-    std: "3.1"
-};
+function loadFile() {
+    let file = document.getElementById("fileInput").files[0];
+    let reader = new FileReader();
 
-// عرض القيم
-for (let key in stats) {
-    document.getElementById(key).innerText = stats[key];
+    reader.onload = function(e) {
+        let data = e.target.result
+        .split(/[\s,]+/)
+        .map(Number)
+        .filter(x => !isNaN(x));
+
+        calculate(data);
+        drawCharts(data);
+    };
+
+    reader.readAsText(file);
 }
 
-// Logout
+function calculate(data) {
+    let n = data.length;
+
+    let mean = data.reduce((a,b)=>a+b,0)/n;
+
+    let sorted = [...data].sort((a,b)=>a-b);
+
+    let median = n%2 ? sorted[Math.floor(n/2)] :
+    (sorted[n/2-1]+sorted[n/2])/2;
+
+    let freq = {};
+    data.forEach(x => freq[x]=(freq[x]||0)+1);
+
+    let mode = Object.keys(freq)
+    .reduce((a,b)=>freq[a]>freq[b]?a:b);
+
+    let range = Math.max(...data)-Math.min(...data);
+
+    let variance = data.reduce((s,x)=>
+    s+Math.pow(x-mean,2),0)/n;
+
+    let std = Math.sqrt(variance);
+
+    meanEl.innerText = mean.toFixed(2);
+    medianEl.innerText = median;
+    modeEl.innerText = mode;
+    rangeEl.innerText = range;
+    varianceEl.innerText = variance.toFixed(2);
+    stdEl.innerText = std.toFixed(2);
+}
+
+// charts
+let barChart, histChart;
+
+function drawCharts(data) {
+
+    if (barChart) barChart.destroy();
+    if (histChart) histChart.destroy();
+
+    barChart = new Chart(barChartCanvas, {
+        type: 'bar',
+        data: {
+            labels: data,
+            datasets: [{ data: data }]
+        }
+    });
+
+    histChart = new Chart(histChartCanvas, {
+        type: 'line',
+        data: {
+            labels: data,
+            datasets: [{ data: data }]
+        }
+    });
+}
+
 function logout() {
     localStorage.clear();
     window.location.href = "login.html";
