@@ -1,46 +1,114 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html lang="en">
 <head>
-    <title>Login</title>
-    <style>
-        body {
-            background: black;
-            color: #00ff00;
-            font-family: monospace;
-            text-align: center;
-            margin-top: 100px;
-        }
-        input, button {
-            padding: 10px;
-            margin: 10px;
-            background: black;
-            color: #00ff00;
-            border: 1px solid #00ff00;
-        }
-    </style>
-</head>
-<body>
+<meta charset="UTF-8">
+<title>Login</title><style>
+body {
+    margin: 0;
+    background: linear-gradient(135deg, #000, #002222);
+    font-family: monospace;
+    color: #00ffcc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
 
-<h2>Admin Login</h2>
+/* Box */
+.login-box {
+    width: 340px;
+    padding: 40px;
+    border: 1px solid #00ffcc;
+    box-shadow: 0 0 40px #00ffcc44;
+    text-align: center;
+    border-radius: 12px;
+}
 
-<input type="text" id="username" placeholder="Username"><br>
-<input type="password" id="password" placeholder="Password"><br>
+h1 {
+    margin-bottom: 5px;
+}
+
+.sub {
+    font-size: 13px;
+    margin-bottom: 20px;
+    color: #aaa;
+}
+
+/* Inputs */
+input {
+    width: 90%;
+    padding: 12px;
+    margin: 10px 0;
+    background: transparent;
+    border: 1px solid #00ffcc;
+    color: #00ffcc;
+}
+
+/* Button */
+button {
+    width: 95%;
+    padding: 12px;
+    border: 1px solid #00ffcc;
+    background: transparent;
+    color: #00ffcc;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #00ffcc;
+    color: black;
+}
+
+.error {
+    color: red;
+    font-size: 13px;
+}
+
+/* Footer */
+.footer {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #888;
+}
+</style></head><body><div class="login-box">
+    <h1>🔐 Login System</h1>
+    <div class="sub">Project by Abdallah Badawy</div><input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+
+<p class="error" id="error"></p>
 
 <button onclick="login()">Login</button>
 
-<script>
-function login() {
-    var user = document.getElementById("username").value;
-    var pass = document.getElementById("password").value;
+<div class="footer">
+    Supervised by Eng. Yara 👩‍🏫
+</div>
 
-    if (user === "admin" && pass === "7oms") {
+</div><script>
+
+// لو داخل قبل كده
+if (localStorage.getItem("loggedIn") === "true") {
+    window.location.href = "index.html";
+}
+
+function login() {
+    let user = username.value.trim();
+    let pass = password.value.trim();
+
+    if (user === "admin" && pass === "111") {
+
         localStorage.setItem("loggedIn", "true");
+        localStorage.setItem("username", user);
+
         window.location.href = "index.html";
+
     } else {
-        alert("Wrong username or password");
+        document.getElementById("error").innerText = "Wrong data ❌";
     }
 }
-</script>
 
-</body>
+// Enter key
+document.addEventListener("keydown", e => {
+    if (e.key === "Enter") login();
+});
+</script></body>
 </html>
