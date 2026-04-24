@@ -1,14 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Statistics Dashboard</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@2/dist/tesseract.min.js"></script>
-
-<style>
+<title>Statistics Dashboard</title><!-- Libraries --><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@2/dist/tesseract.min.js"></script><style>
 body {
     background: #000;
     color: #00ffcc;
@@ -16,7 +9,21 @@ body {
     text-align: center;
 }
 
-h1 { margin-top: 20px; }
+/* Navbar */
+.nav {
+    display:flex;
+    justify-content:space-between;
+    padding:10px;
+    border-bottom:1px solid #00ffcc;
+}
+
+button {
+    padding: 8px;
+    background: black;
+    color: #00ffcc;
+    border: 1px solid #00ffcc;
+    cursor: pointer;
+}
 
 .card {
     display: inline-block;
@@ -26,42 +33,28 @@ h1 { margin-top: 20px; }
     width: 140px;
 }
 
-button {
-    padding: 10px;
-    background: black;
-    color: #00ffcc;
-    border: 1px solid #00ffcc;
-    cursor: pointer;
-}
-
 canvas {
     margin: 20px;
     background: #111;
 }
-</style>
-</head>
-
-<body>
-
-<h1>📊 Data Analysis Dashboard</h1>
+</style></head><body><!-- 🔐 حماية --><script>
+if(localStorage.getItem("login") !== "true"){
+    window.location.href = "login.html";
+}
+</script><div class="nav">
+<h2>⚡ Dashboard</h2>
+<button onclick="logout()">Logout</button>
+</div><h1>📊 Data Analysis</h1>
 <p>Submitted to Eng. Yara 👩‍🏫</p>
-<p>By: Abdullah Badawy 🚀</p>
-
-<input type="file" id="fileInput">
-<button onclick="uploadDataset()">Upload Dataset</button>
-
-<div>
+<p>By: Abdullah Badawy 🚀</p><input type="file" id="fileInput">
+<button onclick="uploadDataset()">Upload Dataset</button><div>
     <div class="card">Mean <div id="mean">0</div></div>
     <div class="card">Median <div id="median">0</div></div>
     <div class="card">Mode <div id="mode">0</div></div>
     <div class="card">Range <div id="range">0</div></div>
     <div class="card">Variance <div id="variance">0</div></div>
     <div class="card">Std Dev <div id="std">0</div></div>
-</div>
-
-<h2>📈 Charts</h2>
-
-<canvas id="barChart"></canvas>
+</div><h2>📈 Charts</h2><canvas id="barChart"></canvas>
 <canvas id="scatterChart"></canvas>
 <canvas id="pieChart"></canvas>
 <canvas id="histChart"></canvas>
@@ -69,16 +62,25 @@ canvas {
 
 <script>
 
+// 🔓 Logout
+function logout(){
+    localStorage.removeItem("login");
+    window.location.href="login.html";
+}
+
+// 📂 Upload
 async function uploadDataset() {
     const file = document.getElementById("fileInput").files[0];
     if (!file) return alert("Upload file!");
 
     let text = "";
 
+    // TXT
     if (file.type === "text/plain") {
         text = await file.text();
     }
 
+    // PDF
     else if (file.type === "application/pdf") {
         const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
         for (let i = 1; i <= pdf.numPages; i++) {
@@ -88,6 +90,7 @@ async function uploadDataset() {
         }
     }
 
+    // Image
     else if (file.type.startsWith("image/")) {
         const result = await Tesseract.recognize(file, 'eng');
         text = result.data.text;
@@ -102,6 +105,7 @@ async function uploadDataset() {
     drawCharts(numbers);
 }
 
+// 🧠 Calculate
 function calculate(numbers) {
 
     let sum = numbers.reduce((a,b)=>a+b,0);
@@ -131,6 +135,7 @@ function calculate(numbers) {
     document.getElementById("std").innerText = std.toFixed(2);
 }
 
+// 📊 Charts
 let charts = [];
 
 function destroyCharts(){
@@ -143,7 +148,7 @@ function drawCharts(data) {
     destroyCharts();
 
     // Bar
-    charts.push(new Chart(document.getElementById("barChart"), {
+    charts.push(new Chart(barChart, {
         type: 'bar',
         data: {
             labels: data.map((_,i)=>i+1),
@@ -152,7 +157,7 @@ function drawCharts(data) {
     }));
 
     // Scatter
-    charts.push(new Chart(document.getElementById("scatterChart"), {
+    charts.push(new Chart(scatterChart, {
         type: 'scatter',
         data: {
             datasets: [{
@@ -163,7 +168,7 @@ function drawCharts(data) {
     }));
 
     // Pie
-    charts.push(new Chart(document.getElementById("pieChart"), {
+    charts.push(new Chart(pieChart, {
         type: 'pie',
         data: {
             labels: data,
@@ -171,7 +176,7 @@ function drawCharts(data) {
         }
     }));
 
-    // Histogram (تقسيم يدوي)
+    // Histogram
     let bins = 5;
     let min = Math.min(...data);
     let max = Math.max(...data);
@@ -184,7 +189,7 @@ function drawCharts(data) {
         hist[i]++;
     });
 
-    charts.push(new Chart(document.getElementById("histChart"), {
+    charts.push(new Chart(histChart, {
         type: 'bar',
         data: {
             labels: hist.map((_,i)=>"Bin "+(i+1)),
@@ -197,7 +202,7 @@ function drawCharts(data) {
     let q1 = sorted[Math.floor(sorted.length/4)];
     let q3 = sorted[Math.floor(3*sorted.length/4)];
 
-    charts.push(new Chart(document.getElementById("boxChart"), {
+    charts.push(new Chart(boxChart, {
         type: 'bar',
         data: {
             labels: ["Min","Q1","Median","Q3","Max"],
@@ -215,7 +220,5 @@ function drawCharts(data) {
     }));
 }
 
-</script>
-
-</body>
+</script></body>
 </html>
