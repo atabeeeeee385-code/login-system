@@ -3,74 +3,61 @@
 <meta charset="UTF-8">
 <title>Login</title><style>
 body {
-    margin: 0;
-    background: linear-gradient(135deg, #000, #002222);
-    font-family: monospace;
-    color: #00ffcc;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+    margin:0;
+    background:black;
+    color:#00ffcc;
+    font-family:monospace;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
 }
-.login-box {
-    width: 340px;
-    padding: 40px;
-    border: 1px solid #00ffcc;
-    box-shadow: 0 0 40px #00ffcc44;
-    text-align: center;
-    border-radius: 12px;
+
+.box {
+    border:1px solid #00ffcc;
+    padding:40px;
+    text-align:center;
+    width:300px;
 }
+
 input {
-    width: 90%;
-    padding: 12px;
-    margin: 10px 0;
-    background: transparent;
-    border: 1px solid #00ffcc;
-    color: #00ffcc;
+    width:90%;
+    padding:10px;
+    margin:10px;
+    background:black;
+    border:1px solid #00ffcc;
+    color:#00ffcc;
 }
+
 button {
-    width: 95%;
-    padding: 12px;
-    border: 1px solid #00ffcc;
-    background: transparent;
-    color: #00ffcc;
-    cursor: pointer;
+    padding:10px;
+    width:95%;
+    background:black;
+    color:#00ffcc;
+    border:1px solid #00ffcc;
+    cursor:pointer;
 }
+
 button:hover {
-    background: #00ffcc;
-    color: black;
+    background:#00ffcc;
+    color:black;
 }
-.error {
-    color: red;
-}
-</style></head><body><div class="login-box">
-<h1>🔐 Login</h1>
-<p>Project by Abdallah Badawy</p><input type="text" id="username" placeholder="Username">
-<input type="password" id="password" placeholder="Password"><p class="error" id="error"></p><button onclick="login()">Login</button>
+</style></head><body><div class="box">
+<h2>🔐 Login</h2><input type="text" id="user" placeholder="Username">
+<input type="password" id="pass" placeholder="Password"><p id="msg" style="color:red;"></p><button onclick="login()">Login</button>
 
-<p style="font-size:12px;color:#aaa;">
-Supervised by Eng. Yara 👩‍🏫
-</p>
+<p style="font-size:12px;">Eng. Yara 👩‍🏫</p>
 </div><script>
-if (localStorage.getItem("loggedIn") === "true") {
-    window.location.href = "index.html";
-}
+function login(){
+    let u = document.getElementById("user").value;
+    let p = document.getElementById("pass").value;
 
-function login() {
-    let user = username.value.trim();
-    let pass = password.value.trim();
-
-    if (user === "admin" && pass === "111") {
-        localStorage.setItem("loggedIn", "true");
-        localStorage.setItem("username", user);
-        window.location.href = "index.html";
+    if(u==="admin" && p==="111"){
+        localStorage.setItem("login","true");
+        window.location.href="index.html";
     } else {
-        document.getElementById("error").innerText = "Wrong data ❌";
+        document.getElementById("msg").innerText="Wrong data ❌";
     }
 }
-
-document.addEventListener("keydown", e => {
-    if (e.key === "Enter") login();
-});
 </script></body>
 </html>
