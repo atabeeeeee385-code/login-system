@@ -1,154 +1,126 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Ultimate Statistics Dashboard</title><!-- Libraries --><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script><style>
+<title>Statistics Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@2/dist/tesseract.min.js"></script>
+
+<style>
 body {
-    margin:0;
-    background:#050505;
-    color:#00ffcc;
-    font-family:monospace;
+    background: #000;
+    color: #00ffcc;
+    font-family: monospace;
+    text-align: center;
 }
-.nav {
-    display:flex;
-    justify-content:space-between;
-    padding:15px;
-    border-bottom:1px solid #00ffcc;
-}
-button {
-    border:1px solid #00ffcc;
-    background:transparent;
-    color:#00ffcc;
-    padding:8px;
-    cursor:pointer;
-}
-.upload {
-    text-align:center;
-    margin:20px;
-}
-.container {
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-    gap:15px;
-    padding:20px;
-}
+
+h1 { margin-top: 20px; }
+
 .card {
-    border:1px solid #00ffcc;
-    padding:20px;
-    text-align:center;
+    display: inline-block;
+    border: 1px solid #00ffcc;
+    padding: 15px;
+    margin: 10px;
+    width: 140px;
 }
+
+button {
+    padding: 10px;
+    background: black;
+    color: #00ffcc;
+    border: 1px solid #00ffcc;
+    cursor: pointer;
+}
+
 canvas {
-    background:white;
-    margin:10px;
+    margin: 20px;
+    background: #111;
 }
-</style></head><body><div class="nav">
-<h2>⚡ Dashboard</h2>
+</style>
+</head>
+
+<body>
+
+<h1>📊 Data Analysis Dashboard</h1>
+<p>Submitted to Eng. Yara 👩‍🏫</p>
+<p>By: Abdullah Badawy 🚀</p>
+
+<input type="file" id="fileInput">
+<button onclick="uploadDataset()">Upload Dataset</button>
+
 <div>
-<span id="user"></span>
-<button onclick="logout()">Logout</button>
+    <div class="card">Mean <div id="mean">0</div></div>
+    <div class="card">Median <div id="median">0</div></div>
+    <div class="card">Mode <div id="mode">0</div></div>
+    <div class="card">Range <div id="range">0</div></div>
+    <div class="card">Variance <div id="variance">0</div></div>
+    <div class="card">Std Dev <div id="std">0</div></div>
 </div>
-</div><h1 style="text-align:center;">📊 Data Analysis</h1><div class="upload">
-<input type="file" id="fileInput" accept=".txt,.csv,.xlsx,.xls,.pdf,image/*">
-<button onclick="loadFile()">Upload Dataset</button>
-</div><div class="container">
-<div class="card"><h3>Mean</h3><p id="mean"></p></div>
-<div class="card"><h3>Median</h3><p id="median"></p></div>
-<div class="card"><h3>Mode</h3><p id="mode"></p></div>
-<div class="card"><h3>Range</h3><p id="range"></p></div>
-<div class="card"><h3>Variance</h3><p id="variance"></p></div>
-<div class="card"><h3>Std Dev</h3><p id="std"></p></div>
-</div><div style="text-align:center;">
+
+<h2>📈 Charts</h2>
+
 <canvas id="barChart"></canvas>
+<canvas id="scatterChart"></canvas>
+<canvas id="pieChart"></canvas>
 <canvas id="histChart"></canvas>
-</div><script>
+<canvas id="boxChart"></canvas>
 
-// حماية
-if (localStorage.getItem("loggedIn") !== "true") {
-    window.location.href = "login.html";
+<script>
+
+async function uploadDataset() {
+    const file = document.getElementById("fileInput").files[0];
+    if (!file) return alert("Upload file!");
+
+    let text = "";
+
+    if (file.type === "text/plain") {
+        text = await file.text();
+    }
+
+    else if (file.type === "application/pdf") {
+        const pdf = await pdfjsLib.getDocument(URL.createObjectURL(file)).promise;
+        for (let i = 1; i <= pdf.numPages; i++) {
+            let page = await pdf.getPage(i);
+            let content = await page.getTextContent();
+            text += content.items.map(i => i.str).join(" ");
+        }
+    }
+
+    else if (file.type.startsWith("image/")) {
+        const result = await Tesseract.recognize(file, 'eng');
+        text = result.data.text;
+    }
+
+    let numbers = text.match(/-?\d+(\.\d+)?/g);
+    if (!numbers) return alert("No numbers found!");
+
+    numbers = numbers.map(Number);
+
+    calculate(numbers);
+    drawCharts(numbers);
 }
 
-document.getElementById("user").innerText =
-"👤 " + localStorage.getItem("username");
+function calculate(numbers) {
 
-// ================= LOAD FILE =================
-function loadFile() {
-    let file = fileInput.files[0];
-    if (!file) return alert("Choose file!");
+    let sum = numbers.reduce((a,b)=>a+b,0);
+    let mean = sum / numbers.length;
 
-    let type = file.type;
+    let sorted = [...numbers].sort((a,b)=>a-b);
 
-    // IMAGE
-    if (type.startsWith("image")) {
-        Tesseract.recognize(file, 'eng').then(res => {
-            processText(res.data.text);
-        });
-    }
+    let median = sorted.length % 2 === 0 ?
+        (sorted[sorted.length/2 -1] + sorted[sorted.length/2]) / 2 :
+        sorted[Math.floor(sorted.length/2)];
 
-    // PDF
-    else if (type === "application/pdf") {
-        let reader = new FileReader();
-        reader.onload = function() {
-            let typedarray = new Uint8Array(this.result);
+    let mode = numbers.sort((a,b)=>
+        numbers.filter(v=>v===a).length - numbers.filter(v=>v===b).length
+    ).pop();
 
-            pdfjsLib.getDocument(typedarray).promise.then(pdf => {
-                pdf.getPage(1).then(page => {
-                    page.getTextContent().then(content => {
-                        let text = content.items.map(i => i.str).join(" ");
-                        processText(text);
-                    });
-                });
-            });
-        };
-        reader.readAsArrayBuffer(file);
-    }
+    let range = Math.max(...numbers) - Math.min(...numbers);
 
-    // EXCEL
-    else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
-        let reader = new FileReader();
-        reader.onload = function(e) {
-            let data = new Uint8Array(e.target.result);
-            let workbook = XLSX.read(data, {type:'array'});
-            let sheet = workbook.Sheets[workbook.SheetNames[0]];
-            let json = XLSX.utils.sheet_to_json(sheet, {header:1});
+    let variance = numbers.reduce((a,b)=>a + Math.pow(b-mean,2),0) / numbers.length;
 
-            let flat = json.flat().map(Number).filter(x=>!isNaN(x));
-            calculate(flat);
-            drawCharts(flat);
-        };
-        reader.readAsArrayBuffer(file);
-    }
-
-    // TEXT / CSV
-    else {
-        let reader = new FileReader();
-        reader.onload = e => processText(e.target.result);
-        reader.readAsText(file);
-    }
-}
-
-// ================= PROCESS =================
-function processText(text) {
-    let data = text.split(/[\s,]+/)
-        .map(Number)
-        .filter(x => !isNaN(x));
-
-    calculate(data);
-    drawCharts(data);
-}
-
-// ================= CALCULATE =================
-function calculate(data) {
-    let n = data.length;
-    let mean = data.reduce((a,b)=>a+b,0)/n;
-    let sorted = [...data].sort((a,b)=>a-b);
-    let median = n%2 ? sorted[Math.floor(n/2)] :
-        (sorted[n/2-1]+sorted[n/2])/2;
-
-    let freq = {};
-    data.forEach(x=>freq[x]=(freq[x]||0)+1);
-    let mode = Object.keys(freq).reduce((a,b)=>freq[a]>freq[b]?a:b);
-
-    let range = Math.max(...data)-Math.min(...data);
-    let variance = data.reduce((s,x)=>s+(x-mean)**2,0)/n;
     let std = Math.sqrt(variance);
 
     document.getElementById("mean").innerText = mean.toFixed(2);
@@ -159,28 +131,91 @@ function calculate(data) {
     document.getElementById("std").innerText = std.toFixed(2);
 }
 
-// ================= CHARTS =================
-let barChart, histChart;
+let charts = [];
+
+function destroyCharts(){
+    charts.forEach(c=>c.destroy());
+    charts = [];
+}
 
 function drawCharts(data) {
-    if (barChart) barChart.destroy();
-    if (histChart) histChart.destroy();
 
-    barChart = new Chart(barChartCanvas, {
+    destroyCharts();
+
+    // Bar
+    charts.push(new Chart(document.getElementById("barChart"), {
         type: 'bar',
-        data: { labels:data, datasets:[{data:data}] }
+        data: {
+            labels: data.map((_,i)=>i+1),
+            datasets: [{ label: 'Data', data }]
+        }
+    }));
+
+    // Scatter
+    charts.push(new Chart(document.getElementById("scatterChart"), {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Scatter',
+                data: data.map((v,i)=>({x:i,y:v}))
+            }]
+        }
+    }));
+
+    // Pie
+    charts.push(new Chart(document.getElementById("pieChart"), {
+        type: 'pie',
+        data: {
+            labels: data,
+            datasets: [{ data }]
+        }
+    }));
+
+    // Histogram (تقسيم يدوي)
+    let bins = 5;
+    let min = Math.min(...data);
+    let max = Math.max(...data);
+    let size = (max - min) / bins;
+
+    let hist = new Array(bins).fill(0);
+
+    data.forEach(v=>{
+        let i = Math.min(Math.floor((v-min)/size), bins-1);
+        hist[i]++;
     });
 
-    histChart = new Chart(histChartCanvas, {
-        type: 'line',
-        data: { labels:data, datasets:[{data:data}] }
-    });
+    charts.push(new Chart(document.getElementById("histChart"), {
+        type: 'bar',
+        data: {
+            labels: hist.map((_,i)=>"Bin "+(i+1)),
+            datasets: [{ label: 'Histogram', data: hist }]
+        }
+    }));
+
+    // Box Plot (تقريبي)
+    let sorted = [...data].sort((a,b)=>a-b);
+    let q1 = sorted[Math.floor(sorted.length/4)];
+    let q3 = sorted[Math.floor(3*sorted.length/4)];
+
+    charts.push(new Chart(document.getElementById("boxChart"), {
+        type: 'bar',
+        data: {
+            labels: ["Min","Q1","Median","Q3","Max"],
+            datasets: [{
+                label: 'Box',
+                data: [
+                    Math.min(...data),
+                    q1,
+                    sorted[Math.floor(sorted.length/2)],
+                    q3,
+                    Math.max(...data)
+                ]
+            }]
+        }
+    }));
 }
 
-function logout() {
-    localStorage.clear();
-    window.location.href="login.html";
-}
+</script>
 
-</script></body>
+</body>
 </html>
