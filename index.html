@@ -1,61 +1,44 @@
 <!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Statistics Dashboard</title><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><style>
+<title>Ultimate Statistics Dashboard</title><!-- Libraries --><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script><script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script><style>
 body {
-    margin: 0;
-    background: #050505;
-    color: #00ffcc;
-    font-family: monospace;
+    margin:0;
+    background:#050505;
+    color:#00ffcc;
+    font-family:monospace;
 }
-
-/* Navbar */
 .nav {
-    display: flex;
-    justify-content: space-between;
-    padding: 15px;
-    border-bottom: 1px solid #00ffcc;
+    display:flex;
+    justify-content:space-between;
+    padding:15px;
+    border-bottom:1px solid #00ffcc;
 }
-
 button {
-    border: 1px solid #00ffcc;
-    background: transparent;
-    color: #00ffcc;
-    padding: 8px;
-    cursor: pointer;
+    border:1px solid #00ffcc;
+    background:transparent;
+    color:#00ffcc;
+    padding:8px;
+    cursor:pointer;
 }
-
-/* Upload */
 .upload {
-    text-align: center;
-    margin: 20px;
+    text-align:center;
+    margin:20px;
 }
-
-/* Cards */
 .container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 15px;
-    padding: 20px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    gap:15px;
+    padding:20px;
 }
-
 .card {
-    border: 1px solid #00ffcc;
-    padding: 20px;
-    text-align: center;
+    border:1px solid #00ffcc;
+    padding:20px;
+    text-align:center;
 }
-
-/* Charts */
 canvas {
-    background: white;
-    margin: 10px;
-    border-radius: 5px;
-}
-
-/* Formulas */
-.formulas {
-    text-align: center;
-    color: #aaa;
+    background:white;
+    margin:10px;
 }
 </style></head><body><div class="nav">
 <h2>⚡ Dashboard</h2>
@@ -63,25 +46,17 @@ canvas {
 <span id="user"></span>
 <button onclick="logout()">Logout</button>
 </div>
-</div><h1 style="text-align:center;">📊 Data Analysis</h1><h3 style="text-align:center;color:#888;">
-Submitted to Eng. Yara 👩‍🏫<br>
-By: Abdallah Badawy 🚀
-</h3><!-- Upload --><div class="upload">
-<input type="file" id="fileInput">
+</div><h1 style="text-align:center;">📊 Data Analysis</h1><div class="upload">
+<input type="file" id="fileInput" accept=".txt,.csv,.xlsx,.xls,.pdf,image/*">
 <button onclick="loadFile()">Upload Dataset</button>
-</div><!-- Cards --><div class="container">
+</div><div class="container">
 <div class="card"><h3>Mean</h3><p id="mean"></p></div>
 <div class="card"><h3>Median</h3><p id="median"></p></div>
 <div class="card"><h3>Mode</h3><p id="mode"></p></div>
 <div class="card"><h3>Range</h3><p id="range"></p></div>
 <div class="card"><h3>Variance</h3><p id="variance"></p></div>
 <div class="card"><h3>Std Dev</h3><p id="std"></p></div>
-</div><!-- Formulas --><div class="formulas">
-<h2>📘 Formulas</h2>
-<p>Mean = Σx / n</p>
-<p>Variance = Σ(x - μ)² / n</p>
-<p>Std Dev = √Variance</p>
-</div><!-- Charts --><div style="text-align:center;">
+</div><div style="text-align:center;">
 <canvas id="barChart"></canvas>
 <canvas id="histChart"></canvas>
 </div><script>
@@ -94,82 +69,118 @@ if (localStorage.getItem("loggedIn") !== "true") {
 document.getElementById("user").innerText =
 "👤 " + localStorage.getItem("username");
 
+// ================= LOAD FILE =================
 function loadFile() {
-    let file = document.getElementById("fileInput").files[0];
-    let reader = new FileReader();
+    let file = fileInput.files[0];
+    if (!file) return alert("Choose file!");
 
-    reader.onload = function(e) {
-        let data = e.target.result
-        .split(/[\s,]+/)
+    let type = file.type;
+
+    // IMAGE
+    if (type.startsWith("image")) {
+        Tesseract.recognize(file, 'eng').then(res => {
+            processText(res.data.text);
+        });
+    }
+
+    // PDF
+    else if (type === "application/pdf") {
+        let reader = new FileReader();
+        reader.onload = function() {
+            let typedarray = new Uint8Array(this.result);
+
+            pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+                pdf.getPage(1).then(page => {
+                    page.getTextContent().then(content => {
+                        let text = content.items.map(i => i.str).join(" ");
+                        processText(text);
+                    });
+                });
+            });
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // EXCEL
+    else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let data = new Uint8Array(e.target.result);
+            let workbook = XLSX.read(data, {type:'array'});
+            let sheet = workbook.Sheets[workbook.SheetNames[0]];
+            let json = XLSX.utils.sheet_to_json(sheet, {header:1});
+
+            let flat = json.flat().map(Number).filter(x=>!isNaN(x));
+            calculate(flat);
+            drawCharts(flat);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // TEXT / CSV
+    else {
+        let reader = new FileReader();
+        reader.onload = e => processText(e.target.result);
+        reader.readAsText(file);
+    }
+}
+
+// ================= PROCESS =================
+function processText(text) {
+    let data = text.split(/[\s,]+/)
         .map(Number)
         .filter(x => !isNaN(x));
 
-        calculate(data);
-        drawCharts(data);
-    };
-
-    reader.readAsText(file);
+    calculate(data);
+    drawCharts(data);
 }
 
+// ================= CALCULATE =================
 function calculate(data) {
     let n = data.length;
-
     let mean = data.reduce((a,b)=>a+b,0)/n;
-
     let sorted = [...data].sort((a,b)=>a-b);
-
     let median = n%2 ? sorted[Math.floor(n/2)] :
-    (sorted[n/2-1]+sorted[n/2])/2;
+        (sorted[n/2-1]+sorted[n/2])/2;
 
     let freq = {};
-    data.forEach(x => freq[x]=(freq[x]||0)+1);
-
-    let mode = Object.keys(freq)
-    .reduce((a,b)=>freq[a]>freq[b]?a:b);
+    data.forEach(x=>freq[x]=(freq[x]||0)+1);
+    let mode = Object.keys(freq).reduce((a,b)=>freq[a]>freq[b]?a:b);
 
     let range = Math.max(...data)-Math.min(...data);
-
-    let variance = data.reduce((s,x)=>
-    s+Math.pow(x-mean,2),0)/n;
-
+    let variance = data.reduce((s,x)=>s+(x-mean)**2,0)/n;
     let std = Math.sqrt(variance);
 
-    meanEl.innerText = mean.toFixed(2);
-    medianEl.innerText = median;
-    modeEl.innerText = mode;
-    rangeEl.innerText = range;
-    varianceEl.innerText = variance.toFixed(2);
-    stdEl.innerText = std.toFixed(2);
+    document.getElementById("mean").innerText = mean.toFixed(2);
+    document.getElementById("median").innerText = median;
+    document.getElementById("mode").innerText = mode;
+    document.getElementById("range").innerText = range;
+    document.getElementById("variance").innerText = variance.toFixed(2);
+    document.getElementById("std").innerText = std.toFixed(2);
 }
 
-// charts
+// ================= CHARTS =================
 let barChart, histChart;
 
 function drawCharts(data) {
-
     if (barChart) barChart.destroy();
     if (histChart) histChart.destroy();
 
     barChart = new Chart(barChartCanvas, {
         type: 'bar',
-        data: {
-            labels: data,
-            datasets: [{ data: data }]
-        }
+        data: { labels:data, datasets:[{data:data}] }
     });
 
     histChart = new Chart(histChartCanvas, {
         type: 'line',
-        data: {
-            labels: data,
-            datasets: [{ data: data }]
-        }
+        data: { labels:data, datasets:[{data:data}] }
     });
 }
 
 function logout() {
     localStorage.clear();
-    window.location.href = "login.html";
+    window.location.href="login.html";
 }
+
 </script></body>
 </html>
