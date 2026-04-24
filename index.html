@@ -1,40 +1,134 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html lang="en">
 <head>
-    <title>Dashboard</title>
-    <style>
-        body {
-            background: black;
-            color: #00ff00;
-            font-family: monospace;
-            text-align: center;
-            margin-top: 100px;
-        }
-        button {
-            padding: 10px;
-            background: black;
-            color: #00ff00;
-            border: 1px solid #00ff00;
-        }
-    </style>
-</head>
-<body>
+<meta charset="UTF-8">
+<title>Statistics Dashboard</title><style>
+body {
+    margin: 0;
+    background: #050505;
+    color: #00ffcc;
+    font-family: monospace;
+}
 
-<h1>Welcome Admin 👋</h1>
+/* Navbar */
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    border-bottom: 1px solid #00ffcc;
+}
 
-<button onclick="logout()">Logout</button>
+.user {
+    font-size: 14px;
+    color: #aaa;
+}
 
-<script>
-// حماية الصفحة
+/* Title */
+.title {
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* Cards */
+.container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    padding: 30px;
+}
+
+.card {
+    border: 1px solid #00ffcc;
+    padding: 20px;
+    text-align: center;
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+.card:hover {
+    background: #00ffcc;
+    color: black;
+    transform: scale(1.05);
+}
+
+/* Charts */
+.charts {
+    text-align: center;
+    padding-bottom: 40px;
+}
+
+img {
+    width: 280px;
+    margin: 10px;
+    border: 1px solid #00ffcc;
+    border-radius: 5px;
+}
+
+/* Button */
+button {
+    padding: 8px 15px;
+    border: 1px solid #00ffcc;
+    background: transparent;
+    color: #00ffcc;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #00ffcc;
+    color: black;
+}
+</style></head><body><!-- Navbar --><div class="nav">
+    <h2>⚡ Statistics Dashboard</h2>
+    <div>
+        <span class="user" id="user"></span>
+        <button onclick="logout()">Logout</button>
+    </div>
+</div><!-- Title --><div class="title">
+    <h1>📊 Data Analysis Overview</h1><h3 style="color:#888;">
+    Statistics Project submitted to Eng. Yara 👩‍🏫<br>
+    By: Abdallah Badawy 🚀
+</h3>
+
+</div><!-- Cards --><div class="container"><div class="card"><h3>Mean</h3><p id="mean"></p></div>
+<div class="card"><h3>Median</h3><p id="median"></p></div>
+<div class="card"><h3>Mode</h3><p id="mode"></p></div>
+<div class="card"><h3>Range</h3><p id="range"></p></div>
+<div class="card"><h3>Variance</h3><p id="variance"></p></div>
+<div class="card"><h3>Std Deviation</h3><p id="std"></p></div></div><!-- Charts --><div class="charts">
+<h2>📈 Visual Charts</h2><img src="bar.png">
+<img src="scatter.png">
+<img src="hist.png">
+<img src="box.png">
+<img src="pie.png"></div><script>
+
+// حماية
 if (localStorage.getItem("loggedIn") !== "true") {
     window.location.href = "login.html";
 }
 
+// اسم المستخدم
+document.getElementById("user").innerText =
+    "👤 " + (localStorage.getItem("username") || "admin");
+
+// ⚠️ حط القيم الحقيقية من Python هنا
+let stats = {
+    mean: "14.8",
+    median: "15",
+    mode: "15",
+    range: "15",
+    variance: "10.2",
+    std: "3.1"
+};
+
+// عرض القيم
+for (let key in stats) {
+    document.getElementById(key).innerText = stats[key];
+}
+
+// Logout
 function logout() {
-    localStorage.removeItem("loggedIn");
+    localStorage.clear();
     window.location.href = "login.html";
 }
-</script>
-
-</body>
+</script></body>
 </html>
